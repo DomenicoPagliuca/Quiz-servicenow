@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>ServiceNow CSA – Simulazione Esame</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #0f2744;
+            color: #1a202c;
+            min-height: 100vh;
+            padding: 12px;
+        }
+
+        .container { max-width: 740px; margin: 0 auto; }
+
+        /* HEADER */
+        header { text-align: center; padding: 16px 0 12px; color: white; }
+        header h1 { font-size: 1.4rem; font-weight: 800; letter-spacing: 0.5px; }
+        header p { font-size: 0.85rem; opacity: 0.75; margin-top: 4px; }
+
+        .progress-wrap {
+            background: rgba(255,255,255,0.15);
+            border-radius: 999px; height: 7px; margin: 14px 0 8px;
+        }
+        .progress-fill {
+            background: linear-gradient(90deg, #63b3ed, #90cdf4);
+            border-radius: 999px; height: 7px;
+            transition: width 0.4s ease;
+        }
+        .stats {
+            display: flex; justify-content: space-between;
+            color: rgba(255,255,255,0.85); font-size: 0.82rem;
+            margin-bottom: 14px;
+        }
+        .stats span { font-weight: 600; }
+
+        /* CARD */
+        .card {
+            background: white; border-radius: 18px;
+            padding: 22px 20px;
+            box-shadow: 0 6px 30px rgba(0,0,0,0.25);
+        }
+
+        .q-number {
+            font-size: 0.72rem; font-weight: 700;
+            color: #2b6cb0; text-transform: uppercase;
+            letter-spacing: 1.2px; margin-bottom: 8px;
+        }
+        .q-text {
+            font-size: 1rem; font-weight: 700;
+            line-height: 1.55; color: #1a202c; margin-bottom: 6px;
+        }
+        .q-hint {
+            font-size: 0.78rem; color: #718096;
+            font-style: italic; margin-bottom: 16px;
+        }
+
+        /* OPTIONS */
+        .options { display: flex; flex-direction: column; gap: 9px; margin-bottom: 18px; }
+
+        .option {
+            display: flex; align-items: flex-start; gap: 11px;
+            padding: 13px 14px; border-radius: 11px;
+            border: 2px solid #e2e8f0;
+            cursor: pointer; transition: all 0.18s;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        .option:hover:not(.disabled) { border-color: #4a90d9; background: #ebf4ff; }
+        .option.selected   { border-color: #3182ce; background: #ebf4ff; }
+        .option.correct    { border-color: #38a169 !important; background: #f0fff4 !important; }
+        .option.wrong      { border-color: #e53e3e !important; background: #fff5f5 !important; }
+        .option.disabled   { cursor: default; }
+
+        .opt-badge {
+            min-width: 26px; height: 26px; border-radius: 50%;
+            background: #e2e8f0; font-weight: 700; font-size: 0.82rem;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; transition: all 0.18s; color: #4a5568;
+        }
+        .option.selected .opt-badge { background: #3182ce; color: white; }
+        .option.correct  .opt-badge { background: #38a169; color: white; }
+        .option.wrong    .opt-badge { background: #e53e3e; color: white; }
+
+        .opt-text {
+            font-size: 0.92rem; line-height: 1.45;
+            color: #2d3748; padding-top: 3px;
+        }
+        .option.correct .opt-text { color: #22543d; font-weight: 600; }
+        .option.wrong   .opt-text { color: #742a2a; }
+
+        /* FEEDBACK */
+        .feedback {
+            text-align: center; padding: 10px 0 6px;
+            font-size: 1rem; font-weight: 700;
+        }
+        .feedback.ok  { color: #38a169; }
+        .feedback.err { color: #e53e3e; }
+
+        /* BUTTONS */
+        .btn {
+            width: 100%; padding: 14px; border-radius: 11px;
+            font-size: 1rem; font-weight: 700; border: none;
+            cursor: pointer; transition: all 0.18s; margin-top: 8px;
+        }
+        .btn-confirm { background: #0f2744; color: white; }
+        .btn-confirm:hover:not(:disabled) { background: #1a3d6e; }
+        .btn-confirm:disabled { background: #a0aec0; cursor: not-allowed; }
+        .btn-next    { background: #3182ce; color: white; }
+        .btn-next:hover { background: #2b6cb0; }
+        .btn-restart { background: #0f2744; color: white; }
+        .btn-restart:hover { background: #1a3d6e; }
+        .btn-review  { background: #3182ce; color: white; }
+        .btn-review:hover { background: #2b6cb0; }
+        .btn-back {
+            background: #e2e8f0; color: #2d3748;
+            width: auto; padding: 10px 22px; border-radius: 10px;
+            font-size: 0.9rem; font-weight: 700; border: none;
+            cursor: pointer; transition: all 0.18s;
+        }
+        .btn-back:hover { background: #cbd5e0; }
+
+        /* FINAL SCREEN */
+        .final-screen { text-align: center; }
+        .score-circle {
+            width: 150px; height: 150px; border-radius: 50%;
+            background: linear-gradient(135deg, #0f2744, #3182ce);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            margin: 20px auto 18px; color: white;
+            box-shadow: 0 4px 20px rgba(49,130,206,0.4);
+        }
+        .score-num  { font-size: 2.8rem; font-weight: 800; line-height: 1; }
+        .score-sub  { font-size: 0.78rem; opacity: 0.85; margin-top: 2px; }
+        .final-title { font-size: 1.3rem; font-weight: 800; color: #1a202c; margin-bottom: 6px; }
+        .final-sub   { font-size: 0.88rem; color: #718096; margin-bottom: 22px; }
+
+        /* REVIEW */
+        #reviewScreen { padding-bottom: 30px; }
+        .review-header {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 18px; color: white;
+        }
+        .review-header h2 { font-size: 1.1rem; font-weight: 700; }
+
+        .rev-item {
+            background: white; border-radius: 14px;
+            padding: 16px 18px; margin-bottom: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 5px solid #e2e8f0;
+        }
+        .rev-item.q-ok  { border-left-color: #38a169; }
+        .rev-item.q-err { border-left-color: #e53e3e; }
+        .rev-num  { font-size: 0.7rem; font-weight: 700; color: #718096; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .rev-text { font-size: 0.88rem; font-weight: 700; color: #1a202c; margin-bottom: 8px; line-height: 1.4; }
+        .rev-ans  { font-size: 0.82rem; line-height: 1.6; }
+        .rev-your { color: #e53e3e; }
+        .rev-correct { color: #38a169; font-weight: 600; }
+
+        /* INTRO SCREEN */
+        .intro-screen { text-align: center; }
+        .intro-icon { font-size: 3.5rem; margin: 10px 0 16px; }
+        .intro-title { font-size: 1.4rem; font-weight: 800; color: #1a202c; margin-bottom: 8px; }
+        .intro-text  { font-size: 0.9rem; color: #4a5568; line-height: 1.6; margin-bottom: 24px; }
+        .intro-text strong { color: #0f2744; }
+        .btn-start { background: linear-gradient(135deg, #0f2744, #3182ce); color: white; font-size: 1.1rem; padding: 16px; }
+
+        @media (min-width: 600px) {
+            body { padding: 24px; }
+            .card { padding: 30px 28px; }
+            header h1 { font-size: 1.7rem; }
+            .q-text { font-size: 1.05rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header id="mainHeader" style="display:none">
+        <h1>ServiceNow CSA</h1>
+        <p>Simulazione Esame di Certificazione</p>
+        <div class="progress-wrap">
+            <div class="progress-fill" id="progressBar" style="width:0%"></div>
+        </div>
+        <div class="stats">
+            <span id="qCounter">Domanda 1 di 60</span>
+            <span id="scoreCounter">Punteggio: 0 / 0</span>
+        </div>
+    </header>
+
+    <!-- INTRO -->
+    <div id="introScreen" class="card intro-screen">
+        <div class="intro-icon">📋</div>
+        <div class="intro-title">ServiceNow CSA<br>Simulazione Esame</div>
+        <div class="intro-text">
+            <strong>60 domande</strong> ufficiali della certificazione.<br>
+            Clicca su una risposta e premi <strong>Conferma</strong> per vedere se è corretta.<br>
+            Le risposte multiple richiedono di selezionare più opzioni.<br><br>
+            Buona fortuna! 🍀
+        </div>
+        <button class="btn btn-start" onclick="startQuiz()">Inizia il Quiz</button>
+    </div>
+
+    <!-- QUIZ -->
+    <div id="quizScreen" class="card" style="display:none"></div>
+
+    <!-- FINAL -->
+    <div id="finalScreen" class="card final-screen" style="display:none"></div>
+
+    <!-- REVIEW -->
+    <div id="reviewScreen" style="display:none"></div>
+</div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────────────
+const questions = [
+  {
+    id:1, type:'single',
+    text:'How are Access Control rules evaluated?',
+    options:[
+      {k:'A', t:'Rules are evaluated from the general to the specific, so a table rule must be active to continue.'},
+      {k:'B', t:'Rules are evaluated using roles. The role with the most permissions evaluates the rules first.'},
+      {k:'C', t:'If a row level rule and a field level rule exist, both rules must be true before an operation is allowed.'},
+      {k:'D', t:'If more than one rule applies to a row, the older rule is evaluated first.'}
+    ],
+    correct:['C']
+  },
+  {
+    id:2, type:'single',
+    text:'What icon do you use to change the label on a form?',
+    options:[
+      {k:'A', t:'Clock'},{k:'B', t:'Pencil'},{k:'C', t:'Star'},{k:'D', t:'Triangle'}
+    ],
+    correct:['B']
+  },
+  {
+    id:3, type:'single',
+    text:'Which module in the Service Catalog application is used to create new catalog items?',
+    options:[
+      {k:'A', t:'Catalog Items'},{k:'B', t:'Configuration Items'},
+      {k:'C', t:'Maintain Items'},{k:'D', t:'Content Items'}
+    ],
+    correct:['C']
+  },
+  {
+    id:4, type:'single',
+    text:'What are the steps to apply an update set retrieved from another instance?',
+    options:[
+      {k:'A', t:'Verify the Update Set is Complete → Retrieve → Preview → Commit'},
+      {k:'B', t:'Load the Update Set → Import the Update Set → Install'},
+      {k:'C', t:'Import the Update Set → Verify the Update Set is complete → Link the Update Set → Publish'},
+      {k:'D', t:'Verify Update Set is Complete → Test Connection → Apply'}
+    ],
+    correct:['A']
+  },
+  {
+    id:5, type:'multiple', choose:4,
+    text:'What are the options that can be set to determine when a Business Rule executes?',
+    options:[
+      {k:'A', t:'After'},{k:'B', t:'Submit'},{k:'C', t:'Before'},
+      {k:'D', t:'Load'},{k:'E', t:'Async'},{k:'F', t:'Display'},{k:'G', t:'Change'}
+    ],
+    correct:['A','C','E','F']
+  },
+  {
+    id:6, type:'single',
+    text:'What is the difference between a Client Script and a Business Rule?',
+    options:[
+      {k:'A', t:'A Client Script runs on the client (browser) and a Business Rule runs on the server.'},
+      {k:'B', t:'Client Scripts can write to the database, Business Rules cannot.'},
+      {k:'C', t:'A Client Script executes when the server sends a request, and a Business Rule executes when the browser loads a page.'},
+      {k:'D', t:'A Client Script executes on the server, and a Business Rule executes on the client.'}
+    ],
+    correct:['A']
+  },
+  {
+    id:7, type:'single',
+    text:'Who does the data controller refer to in the Shared Responsibility Model?',
+    options:[
+      {k:'A', t:'Customer'},{k:'B', t:'Attachment partners'},{k:'C', t:'ServiceNow'}
+    ],
+    correct:['A']
+  },
+  {
+    id:8, type:'single',
+    text:'How can an administrator modify the layout of a form?',
+    options:[
+      {k:'A', t:'By editing system scripts'},{k:'B', t:'By altering the page header frame'},
+      {k:'C', t:'By changing the database schema'},{k:'D', t:'By configuring form sections'}
+    ],
+    correct:['D']
+  },
+  {
+    id:9, type:'single',
+    text:'What protects applications by restricting access to data in another application in the same instance?',
+    options:[
+      {k:'A', t:'Access Control Rules'},{k:'B', t:'Admin Center'},
+      {k:'C', t:'Assignment Rules'},{k:'D', t:'Application Scope'}
+    ],
+    correct:['D']
+  },
+  {
+    id:10, type:'multiple', choose:3,
+    text:'What are the components that make up a filter condition?',
+    options:[
+      {k:'A', t:'Column'},{k:'B', t:'Operator'},{k:'C', t:'Field'},
+      {k:'D', t:'Value'},{k:'E', t:'Match Criteria'}
+    ],
+    correct:['B','C','D']
+  },
+  {
+    id:11, type:'single',
+    text:'How does a user exclude "Incidents with a State of Resolved" on an active incidents list?',
+    options:[
+      {k:'A', t:'On the list of records, locate and right-click on the Resolved value, and select Filter Out'},
+      {k:'B', t:'On the list of records, locate and right-click on the Resolved value, and select Exclude'},
+      {k:'C', t:'On the State column title, right-click, select Filter Out → Resolved'},
+      {k:'D', t:'On Search, select State, type not Resolved, press enter'}
+    ],
+    correct:['A']
+  },
+  {
+    id:12, type:'single',
+    text:'Which path is used on the Filter Navigator to display the list of records from the sys_user table?',
+    options:[
+      {k:'A', t:'sys_user.list'},{k:'B', t:'sys_user.display'},
+      {k:'C', t:'sys_user.do'},{k:'D', t:'sys_userview'}
+    ],
+    correct:['A']
+  },
+  {
+    id:13, type:'single',
+    text:'What action helps to see which modules are visible to a user?',
+    options:[
+      {k:'A', t:'Impersonate the user'},{k:'B', t:'Initiate a Connect Chat session'},
+      {k:'C', t:'Install the Bomgar plugin'},{k:'D', t:'Launch a NowChat window'}
+    ],
+    correct:['A']
+  },
+  {
+    id:14, type:'single',
+    text:'A user needs to create a Catalog Item for ordering a new desktop computer with these specifications:\n• Color: Black or Silver\n• RAM: 32 GB or 64 GB\n• Keyboard: Standard or Ergonomic\n• Monitor: 24 inch or 32 inch\n\nWhat is added to the Catalog Item form?',
+    options:[
+      {k:'A', t:'UI options'},{k:'B', t:'Variables'},
+      {k:'C', t:'Choices'},{k:'D', t:'Fields'}
+    ],
+    correct:['B']
+  },
+  {
+    id:15, type:'single',
+    text:'Which tab on the knowledge base record would you use to identify the sets of users who are able to read articles in that knowledge base?',
+    options:[
+      {k:'A', t:'Accessible to'},{k:'B', t:'Can Read'},
+      {k:'C', t:'Can Access'},{k:'D', t:'Access List'}
+    ],
+    correct:['B']
+  },
+  {
+    id:16, type:'single',
+    text:'Which interface allows users to search articles, submit requests, and browse communication notices?',
+    options:[
+      {k:'A', t:'Service Portal'},{k:'B', t:'Employee Self Service'},
+      {k:'C', t:'Customer Service Management'},{k:'D', t:'One Stop Shop'}
+    ],
+    correct:['A']
+  },
+  {
+    id:17, type:'single',
+    text:'Which ServiceNow utility provides a modern interactive graphical interface to visualize configuration items and their relationships?',
+    options:[
+      {k:'A', t:'CI Class Map'},{k:'B', t:'Dependency View'},
+      {k:'C', t:'Business Service Map'},{k:'D', t:'Flow Design'}
+    ],
+    correct:['B']
+  },
+  {
+    id:18, type:'single',
+    text:'What is the name of the string that displays filter criteria?',
+    options:[
+      {k:'A', t:'Choice'},{k:'B', t:'Breadcrumb'},
+      {k:'C', t:'Menu'},{k:'D', t:'Topic'}
+    ],
+    correct:['B']
+  },
+  {
+    id:19, type:'single',
+    text:'What is used to determine user access to knowledge bases or a knowledge article?',
+    options:[
+      {k:'A', t:'Privacy Settings'},{k:'B', t:'User Criteria'},
+      {k:'C', t:'sn_kb_read, sn_article_read'},{k:'D', t:'Read Access Flag'}
+    ],
+    correct:['B']
+  },
+  {
+    id:20, type:'multiple', choose:2,
+    text:'Which role(s) are required to impersonate a user?',
+    options:[
+      {k:'A', t:'admin'},{k:'B', t:'itil, sn_admin'},{k:'C', t:'impersonator'},
+      {k:'D', t:'itil_user'},{k:'E', t:'security_admin'}
+    ],
+    correct:['A','C']
+  },
+  {
+    id:21, type:'single',
+    text:'A Catalog Administrator is asked to create an option in the Service Catalog, which will allow a user to select "Get Help" and input their issue on a form. Which feature achieves this?',
+    options:[
+      {k:'A', t:'Create a Content Item'},{k:'B', t:'Create an Order Guide'},
+      {k:'C', t:'Create a Catalog Item'},{k:'D', t:'Create a Record Producer'}
+    ],
+    correct:['D']
+  },
+  {
+    id:22, type:'single',
+    text:'What happens when a user is listed in both the "Available For" and "Not Available For" category lists?',
+    options:[
+      {k:'A', t:'The user can access the category only if the catalog items within the category have no restrictions'},
+      {k:'B', t:'The user can access the category because "Available For" takes precedence'},
+      {k:'C', t:'The user can access the category but cannot modify it'},
+      {k:'D', t:'The user cannot access the category because "Not Available For" overrides "Available For"'}
+    ],
+    correct:['D']
+  },
+  {
+    id:23, type:'single',
+    text:'Which feature helps to automatically allocate or attach high-priority cases or requests to the appropriate assignment group or user?',
+    options:[
+      {k:'A', t:'UI Policy'},{k:'B', t:'Assignment Rule'},
+      {k:'C', t:'User Policy'},{k:'D', t:'Predictive Intelligence'}
+    ],
+    correct:['B']
+  },
+  {
+    id:24, type:'single',
+    text:'When does a Business Rule execute in ServiceNow?',
+    options:[
+      {k:'A', t:'Before or after a user logs into the platform'},
+      {k:'B', t:'When a user downloads a report'},
+      {k:'C', t:'Only when a record is deleted'},
+      {k:'D', t:'Before or after a record is saved to the database'}
+    ],
+    correct:['D']
+  },
+  {
+    id:25, type:'single',
+    text:'What is the name of the table relationship, where two or more tables are related in a bidirectional relationship, so that the related records are visible from both tables in a related list?',
+    options:[
+      {k:'A', t:'Extended'},{k:'B', t:'Many-to-Many'},
+      {k:'C', t:'One to Many'},{k:'D', t:'Database View'}
+    ],
+    correct:['B']
+  },
+  {
+    id:26, type:'single',
+    text:'What actions are required to refine the number of records displayed in a list view?',
+    options:[
+      {k:'A', t:'Modify field properties and duplicate form views'},
+      {k:'B', t:'Select the filter icon and apply conditions'},
+      {k:'C', t:'Right-click to configure relationship list'},
+      {k:'D', t:'Add embedded lists and form annotations'}
+    ],
+    correct:['B']
+  },
+  {
+    id:27, type:'single',
+    text:'Which component of a table contains a piece of data for a record?',
+    options:[
+      {k:'A', t:'Element'},{k:'B', t:'Datapoint'},{k:'C', t:'Field'},
+      {k:'D', t:'Anchor'},{k:'E', t:'Item'}
+    ],
+    correct:['C']
+  },
+  {
+    id:28, type:'single',
+    text:'How would you distinguish between a Base Class table and a Parent Class table?',
+    options:[
+      {k:'A', t:'Base Class tables always have tables extended from them. Parent tables do not have tables extended from them.'},
+      {k:'B', t:'Base Class table is not extended from another table. Parent class tables may be extended from another table.'},
+      {k:'C', t:'Extended tables are always extended from Parent tables. Extended tables are usually extended from Base tables.'},
+      {k:'D', t:'Extended tables can be extended from Parent tables or Base tables; but they cannot be extended from both.'}
+    ],
+    correct:['B']
+  },
+  {
+    id:29, type:'single',
+    text:'What is the result of the order in which access controls are evaluated?',
+    options:[
+      {k:'A', t:'Business rules must have access to the application before enforcing access to a table'},
+      {k:'B', t:'Business rules must have access to the fields in a table'},
+      {k:'C', t:'Business rules can try to make as many changes as possible'},
+      {k:'D', t:'Business rules only have access to a table, therefore enforcing access to a field first'}
+    ],
+    correct:['D']
+  },
+  {
+    id:30, type:'single',
+    text:'On a Catalog Task record, how would an administrator change the priority choice options?',
+    options:[
+      {k:'A', t:'Right-click the Priority Label > select Configure Choices'},
+      {k:'B', t:'Right-click the Priority Label > select Configure Lists'},
+      {k:'C', t:'Open the Data Dictionary > select Values'},
+      {k:'D', t:'In the Context menu of the form, select Configure Options'}
+    ],
+    correct:['A']
+  },
+  {
+    id:31, type:'single',
+    text:'Which form element displays the list of activities or history on a task form?',
+    options:[
+      {k:'A', t:'Action Stream'},{k:'B', t:'Activity Formatter'},
+      {k:'C', t:'Sidebar'},{k:'D', t:'Action Formatter'}
+    ],
+    correct:['B']
+  },
+  {
+    id:32, type:'multiple', choose:3,
+    text:'Tables may have a One to Many relationship. From the Service Catalog, what are examples of tables having a one-to-many relationship?',
+    options:[
+      {k:'A', t:'One Requested Item can have many Approvals'},
+      {k:'B', t:'One Requested Item can have many Catalog Tasks'},
+      {k:'C', t:'One Approval can have many Requests'},
+      {k:'D', t:'One Request can have many Requested Items'},
+      {k:'E', t:'One Cart can have many Requests'}
+    ],
+    correct:['A','B','D']
+  },
+  {
+    id:33, type:'single',
+    text:'Which feature can be used to categorize a set of records from a list and make them visible to other users?',
+    options:[
+      {k:'A', t:'Tags'},{k:'B', t:'Favorites'},
+      {k:'C', t:'History'},{k:'D', t:'Activity Formatter'}
+    ],
+    correct:['A']
+  },
+  {
+    id:34, type:'single',
+    text:'Typically, based on Best Practice, which of the following interactions is used to make fields mandatory, read-only, and/or hidden?',
+    options:[
+      {k:'A', t:'Business Rules'},{k:'B', t:'UI Actions'},
+      {k:'C', t:'UI Policies'},{k:'D', t:'Client Scripts'}
+    ],
+    correct:['C']
+  },
+  {
+    id:35, type:'single',
+    text:'Which tab on the knowledge base record would you use to identify the sets of users who are able to read articles in that knowledge base? (2nd occurrence)',
+    options:[
+      {k:'A', t:'Accessible To'},{k:'B', t:'Can Read'},
+      {k:'C', t:'Can Access'},{k:'D', t:'Access List'}
+    ],
+    correct:['B']
+  },
+  {
+    id:36, type:'single',
+    text:'What action can be performed by selecting the Additional actions menu (in the table header)?',
+    options:[
+      {k:'A', t:'Create a database index'},{k:'B', t:'Schedule a job'},
+      {k:'C', t:'Duplicate the selected form view'},{k:'D', t:'Add a new module'}
+    ],
+    correct:['C']
+  },
+  {
+    id:37, type:'single',
+    text:'What process allows users to create, categorize, review, approve and browse important information in a centralized location that is shared by the entire organization?',
+    options:[
+      {k:'A', t:'Information Portal Management'},{k:'B', t:'Knowledge-Centered Management'},
+      {k:'C', t:'Knowledge Management'},{k:'D', t:'Self Service Management'},
+      {k:'E', t:'Business Information Management'}
+    ],
+    correct:['C']
+  },
+  {
+    id:38, type:'single',
+    text:'Which feature automates business logic like approvals, task notifications and record operations for a particular process?',
+    options:[
+      {k:'A', t:'Task Flows'},{k:'B', t:'Flow Diagrams'},
+      {k:'C', t:'Flows and Subflows'},{k:'D', t:'Action Sequences'}
+    ],
+    correct:['C']
+  },
+  {
+    id:39, type:'single',
+    text:'What encryption feature is included in ServiceNow by default?',
+    options:[
+      {k:'A', t:'Data at rest'},{k:'B', t:'Data in transit'},{k:'C', t:'Data in use'}
+    ],
+    correct:['B']
+  },
+  {
+    id:40, type:'single',
+    text:'A customer asks you to make the following updates to a form:\n• When the Caller field is populated, automatically populate the Location field based on the caller\'s location\n• Add Info notes at the top of the page when the record is submitted\n\nWhat type of script would you use to meet this requirement?',
+    options:[
+      {k:'A', t:'UI Script'},{k:'B', t:'Client Script'},
+      {k:'C', t:'Business Script'},{k:'D', t:'Server Script'}
+    ],
+    correct:['B']
+  },
+  {
+    id:41, type:'single',
+    text:'Which access control rule applies to every field in the Incident table?',
+    options:[
+      {k:'A', t:'incident <=>*'},{k:'B', t:'incident.*'},
+      {k:'C', t:'incident||*'},{k:'D', t:'incident.all'}
+    ],
+    correct:['B']
+  },
+  {
+    id:42, type:'single',
+    text:'Which application is used primarily to load data into ServiceNow?',
+    options:[
+      {k:'A', t:'Import Management'},{k:'B', t:'Data Import Configuration'},
+      {k:'C', t:'System Import – Sets'},{k:'D', t:'Import Hub'}
+    ],
+    correct:['C']
+  },
+  {
+    id:43, type:'single',
+    text:'Tables may be set up with Many-to-Many relationships. What is a classic example of a scenario where the tables have many-to-many relationships?',
+    options:[
+      {k:'A', t:'A Configuration Item can belong to multiple Classes, and Classes can contain multiple Configuration Items'},
+      {k:'B', t:'Requests can contain many Items, and Items can be any item from the catalog'},
+      {k:'C', t:'A Task can trigger many Workflows, and a Workflow can trigger many Tasks'},
+      {k:'D', t:'Vendors can sell multiple products, and products can be sold by multiple vendors'}
+    ],
+    correct:['D']
+  },
+  {
+    id:44, type:'single',
+    text:'A customer wants to implement a phone ordering mechanism for employees that triggers a notification for the requester and approver at each approval level. Which feature is used to achieve this?',
+    options:[
+      {k:'A', t:'Approval Criteria'},{k:'B', t:'Approver Delegates'},
+      {k:'C', t:'Parent-Child Approvers'},{k:'D', t:'Flows and Subflows'}
+    ],
+    correct:['D']
+  },
+  {
+    id:45, type:'single',
+    text:'Which module is used as the first step for importing data?',
+    options:[
+      {k:'A', t:'Coalesce Data'},{k:'B', t:'Transform Data'},
+      {k:'C', t:'Import Data'},{k:'D', t:'Load Data'}
+    ],
+    correct:['D']
+  },
+  {
+    id:46, type:'single',
+    text:'Which feature can be used to give users the choice to easily populate the most-used fields for a specific table?',
+    options:[
+      {k:'A', t:'Tags'},{k:'B', t:'Template'},
+      {k:'C', t:'Reference type fields'},{k:'D', t:'Formatter'}
+    ],
+    correct:['B']
+  },
+  {
+    id:47, type:'multiple', choose:3,
+    text:'A customer wants to be able to identify and track components of their infrastructure that support their eCommerce service. What ServiceNow functions could support this requirement?',
+    options:[
+      {k:'A', t:'Financial Management'},{k:'B', t:'Service Mapping'},
+      {k:'C', t:'Configuration Management (CMDB)'},{k:'D', t:'Discovery'},
+      {k:'E', t:'Performance Analytics'}
+    ],
+    correct:['B','C','D']
+  },
+  {
+    id:48, type:'single',
+    text:'What is a recommendation related to the Default Update Set for moving customizations between instances?',
+    options:[
+      {k:'A', t:'Avoid the use of Default Update Set for moving between instances'},
+      {k:'B', t:'Submit Default Update Set to application repository'},
+      {k:'C', t:'Merge Default Update Set before moving between instances'},
+      {k:'D', t:'Keep Default Update Set to maximum of 20 records, for troubleshooting purposes'}
+    ],
+    correct:['A']
+  },
+  {
+    id:49, type:'multiple', choose:3,
+    text:'When managing tags, you can adjust who is able to see it. What are the visibility options for a tag?',
+    options:[
+      {k:'A', t:'Me'},{k:'B', t:'Everyone'},{k:'C', t:'Roles and Permissions'},
+      {k:'D', t:'Administrators'},{k:'E', t:'Groups and Users'}
+    ],
+    correct:['A','B','E']
+  },
+  {
+    id:50, type:'single',
+    text:'Which flow components allow you to specify when the schedule runs?',
+    options:[
+      {k:'A', t:'Trigger and Condition Pill'},{k:'B', t:'Trigger Criteria and Clock'},
+      {k:'C', t:'Condition and Rule'},{k:'D', t:'Scope and Trigger Condition'},
+      {k:'E', t:'Trigger and Clockwise'}
+    ],
+    correct:['A']
+  },
+  {
+    id:51, type:'single',
+    text:'How would you describe the relationship between the Incident and Task table?',
+    options:[
+      {k:'A', t:'Incident table is related to the Task table via the INC number'},
+      {k:'B', t:'Incident table has a one-to-many relationship with the Task table'},
+      {k:'C', t:'Incident table has a many-to-many relationship with the Task table'},
+      {k:'D', t:'Incident table is extended from Task table'},
+      {k:'E', t:'Incident table is a database view of the Task table'}
+    ],
+    correct:['D']
+  },
+  {
+    id:52, type:'single',
+    text:'Which feature allows users to browse internal IT documentation, like troubleshooting scripts and frequently asked questions?',
+    options:[
+      {k:'A', t:'SharePoint'},{k:'B', t:'Knowledge'},
+      {k:'C', t:'Stack Overflow'},{k:'D', t:'ServiceNow Wiki'}
+    ],
+    correct:['B']
+  },
+  {
+    id:53, type:'multiple', choose:3,
+    text:'The ServiceNow platform supports a wide variety of plug-and-play applications. Which of these workflows are included in the platform?',
+    options:[
+      {k:'A', t:'Infrastructure Workflows'},{k:'B', t:'Employee Workflows'},
+      {k:'C', t:'Customer Workflows'},{k:'D', t:'IT Workflows'},
+      {k:'E', t:'Federal Workflows'},{k:'F', t:'Manufacturing Workflows'}
+    ],
+    correct:['B','C','D']
+  },
+  {
+    id:54, type:'multiple', choose:2,
+    text:'Which events are used for monitoring and logging in the Security Center?',
+    options:[
+      {k:'A', t:'User deletion'},{k:'B', t:'Table creation'},
+      {k:'C', t:'Failed login'},{k:'D', t:'Impersonation'}
+    ],
+    correct:['C','D']
+  },
+  {
+    id:55, type:'multiple', choose:3,
+    text:'What are the three key tables in an enterprise CMDB?',
+    options:[
+      {k:'A', t:'sn_cmdb'},{k:'B', t:'cmdb_bak'},{k:'C', t:'sn_cmdb_bak'},
+      {k:'D', t:'cmdb_rel_ci'},{k:'E', t:'sn_cmdb_ci'},
+      {k:'F', t:'cmdb_ci'},{k:'G', t:'cmdb'}
+    ],
+    correct:['D','F','G']
+  },
+  {
+    id:56, type:'single',
+    text:'In a Knowledge Base record, where can an administrator find User Criteria for who can read the articles?',
+    options:[
+      {k:'A', t:'From the Can Read tab'},{k:'B', t:'From the Available For tab'},
+      {k:'C', t:'From the Can Access tab'},{k:'D', t:'From the Accessible to tab'}
+    ],
+    correct:['A']
+  },
+  {
+    id:57, type:'single',
+    text:'What process allows users to create, categorize, review, approve and browse important information in a centralized location that is shared by the entire organization? (2nd occurrence)',
+    options:[
+      {k:'A', t:'Information Portal Management'},{k:'B', t:'Knowledge-Centered Management'},
+      {k:'C', t:'Knowledge Management'},{k:'D', t:'Self Service Management'},
+      {k:'E', t:'Business Information Management'}
+    ],
+    correct:['C']
+  },
+  {
+    id:58, type:'single',
+    text:'You have heard about a new application released by ServiceNow. You want to try it out to see if it meets the needs of your company\'s Stakeholder Management. What would be the best way to get hands-on experience with the new application?',
+    options:[
+      {k:'A', t:'Search the Web for free trials of the same or competing products'},
+      {k:'B', t:'Install the application plugin on your company\'s production instance'},
+      {k:'C', t:'Install the application plugin on your personal development instance'},
+      {k:'D', t:'Check the latest release notes for details on the new application'}
+    ],
+    correct:['C']
+  },
+  {
+    id:59, type:'single',
+    text:'Which ServiceNow capability allows you to provide knowledge articles via a conversational messaging interface?',
+    options:[
+      {k:'A', t:'Virtual Agent'},{k:'B', t:'Instance Chat'},
+      {k:'C', t:'Agent Assist'},{k:'D', t:'Now Messenger'}
+    ],
+    correct:['A']
+  },
+  {
+    id:60, type:'single',
+    text:'Where do UI Policies run?',
+    options:[
+      {k:'A', t:'Within server-side scripts'},{k:'B', t:'Knowledge base'},
+      {k:'C', t:'Client-side (browser)'},{k:'D', t:'Server-side (backend)'}
+    ],
+    correct:['C']
+  }
+];
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let current = 0;
+let score = 0;
+let answered = 0;
+let selected = [];
+let confirmed = false;
+let results = []; // {qIndex, userAnswers, isCorrect}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function esc(s) {
+    return String(s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+        .replace(/\n/g,'<br>');
+}
+
+function arrEqual(a, b) {
+    if (a.length !== b.length) return false;
+    const sa = [...a].sort(), sb = [...b].sort();
+    return sa.every((v,i) => v === sb[i]);
+}
+
+// ─── START ───────────────────────────────────────────────────────────────────
+function startQuiz() {
+    document.getElementById('introScreen').style.display = 'none';
+    document.getElementById('mainHeader').style.display = 'block';
+    document.getElementById('quizScreen').style.display = 'block';
+    renderQuestion();
+}
+
+// ─── RENDER QUESTION ─────────────────────────────────────────────────────────
+function renderQuestion() {
+    const q = questions[current];
+    selected = [];
+    confirmed = false;
+
+    // update header
+    const pct = (current / 60) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('qCounter').textContent = `Domanda ${current + 1} di 60`;
+    document.getElementById('scoreCounter').textContent = `Punteggio: ${score} / ${answered}`;
+
+    const hint = q.type === 'multiple'
+        ? `<div class="q-hint">⚠️ Seleziona ${q.choose} risposte corrette</div>`
+        : '';
+
+    const optionsHtml = q.options.map(o =>
+        `<div class="option" id="opt-${o.k}" onclick="toggleOption('${o.k}')">
+            <div class="opt-badge">${esc(o.k)}</div>
+            <div class="opt-text">${esc(o.t)}</div>
+        </div>`
+    ).join('');
+
+    document.getElementById('quizScreen').innerHTML = `
+        <div class="q-number">Domanda ${current + 1} / 60</div>
+        <div class="q-text">${esc(q.text)}</div>
+        ${hint}
+        <div class="options" id="optionsList">${optionsHtml}</div>
+        <button class="btn btn-confirm" id="btnConfirm" onclick="confirmAnswer()" disabled>Conferma risposta</button>
+        <div id="feedbackArea"></div>
+        <button class="btn btn-next" id="btnNext" style="display:none" onclick="nextQuestion()">
+            ${current < 59 ? 'Prossima domanda →' : 'Vedi risultato finale'}
+        </button>
+    `;
+}
+
+// ─── TOGGLE OPTION ───────────────────────────────────────────────────────────
+function toggleOption(key) {
+    if (confirmed) return;
+    const q = questions[current];
+
+    if (q.type === 'single') {
+        // deselect all, select clicked
+        selected = [key];
+        q.options.forEach(o => {
+            document.getElementById('opt-' + o.k).classList.remove('selected');
+        });
+        document.getElementById('opt-' + key).classList.add('selected');
+    } else {
+        // toggle
+        const idx = selected.indexOf(key);
+        if (idx === -1) {
+            selected.push(key);
+            document.getElementById('opt-' + key).classList.add('selected');
+        } else {
+            selected.splice(idx, 1);
+            document.getElementById('opt-' + key).classList.remove('selected');
+        }
+    }
+
+    const canConfirm = selected.length > 0;
+    document.getElementById('btnConfirm').disabled = !canConfirm;
+}
+
+// ─── CONFIRM ─────────────────────────────────────────────────────────────────
+function confirmAnswer() {
+    if (confirmed) return;
+    confirmed = true;
+
+    const q = questions[current];
+    const isCorrect = arrEqual(selected, q.correct);
+
+    if (isCorrect) score++;
+    answered++;
+
+    results.push({ qIndex: current, userAnswers: [...selected], isCorrect });
+
+    // disable all options
+    q.options.forEach(o => {
+        document.getElementById('opt-' + o.k).classList.add('disabled');
+        document.getElementById('opt-' + o.k).onclick = null;
+    });
+
+    // colour options
+    q.options.forEach(o => {
+        const el = document.getElementById('opt-' + o.k);
+        el.classList.remove('selected');
+        if (q.correct.includes(o.k)) {
+            el.classList.add('correct');
+        } else if (selected.includes(o.k)) {
+            el.classList.add('wrong');
+        }
+    });
+
+    // feedback
+    const fb = document.getElementById('feedbackArea');
+    fb.innerHTML = isCorrect
+        ? '<div class="feedback ok">✅ Risposta corretta!</div>'
+        : '<div class="feedback err">❌ Risposta errata</div>';
+
+    document.getElementById('btnConfirm').style.display = 'none';
+    document.getElementById('btnNext').style.display = 'block';
+
+    // update score in header
+    document.getElementById('scoreCounter').textContent = `Punteggio: ${score} / ${answered}`;
+}
+
+// ─── NEXT ────────────────────────────────────────────────────────────────────
+function nextQuestion() {
+    current++;
+    if (current >= 60) {
+        showFinal();
+    } else {
+        renderQuestion();
+    }
+}
+
+// ─── FINAL SCREEN ────────────────────────────────────────────────────────────
+function showFinal() {
+    document.getElementById('quizScreen').style.display = 'none';
+    document.getElementById('progressBar').style.width = '100%';
+    document.getElementById('qCounter').textContent = 'Quiz completato!';
+    document.getElementById('scoreCounter').textContent = `Punteggio: ${score} / 60`;
+
+    const pct = Math.round((score / 60) * 100);
+    let msg, sub;
+    if (pct >= 80)      { msg = '🏆 Ottimo! Pronto per l\'esame!'; sub = 'Hai dimostrato una solida conoscenza di ServiceNow.'; }
+    else if (pct >= 60) { msg = '📚 Buon risultato, ma c\'è ancora da studiare.'; sub = 'Ripasssa le domande sbagliate e riprova!'; }
+    else                { msg = '💪 Continua a studiare!'; sub = 'Rivedi il materiale e riprova il quiz.'; }
+
+    document.getElementById('finalScreen').style.display = 'block';
+    document.getElementById('finalScreen').innerHTML = `
+        <div class="final-title">Quiz completato!</div>
+        <div class="score-circle">
+            <div class="score-num">${score}/60</div>
+            <div class="score-sub">${pct}%</div>
+        </div>
+        <div class="final-title">${msg}</div>
+        <div class="final-sub">${sub}</div>
+        <button class="btn btn-restart" onclick="restartQuiz()">🔄 Ricomincia da capo</button>
+        <button class="btn btn-review" onclick="showReview()">🔍 Rivedi le risposte</button>
+    `;
+}
+
+// ─── RESTART ─────────────────────────────────────────────────────────────────
+function restartQuiz() {
+    current = 0; score = 0; answered = 0; selected = []; confirmed = false; results = [];
+    document.getElementById('finalScreen').style.display = 'none';
+    document.getElementById('reviewScreen').style.display = 'none';
+    document.getElementById('quizScreen').style.display = 'block';
+    document.getElementById('progressBar').style.width = '0%';
+    renderQuestion();
+}
+
+// ─── REVIEW ──────────────────────────────────────────────────────────────────
+function showReview() {
+    document.getElementById('finalScreen').style.display = 'none';
+    const rv = document.getElementById('reviewScreen');
+    rv.style.display = 'block';
+
+    let html = `
+        <div class="review-header">
+            <button class="btn-back" onclick="backToFinal()">← Torna</button>
+            <h2>Riepilogo risposte (${score}/60 corrette)</h2>
+        </div>
+    `;
+
+    results.forEach(r => {
+        const q = questions[r.qIndex];
+        const cls = r.isCorrect ? 'q-ok' : 'q-err';
+        const icon = r.isCorrect ? '✅' : '❌';
+
+        const correctLabels = q.correct.map(k => {
+            const o = q.options.find(x => x.k === k);
+            return `${k}. ${o ? o.t : k}`;
+        }).join(' | ');
+
+        let userLine = '';
+        if (!r.isCorrect) {
+            if (r.userAnswers.length === 0) {
+                userLine = `<div class="rev-your">La tua risposta: nessuna selezione</div>`;
+            } else {
+                const userLabels = r.userAnswers.map(k => {
+                    const o = q.options.find(x => x.k === k);
+                    return `${k}. ${o ? o.t : k}`;
+                }).join(' | ');
+                userLine = `<div class="rev-your">La tua risposta: ${esc(userLabels)}</div>`;
+            }
+        }
+
+        html += `
+            <div class="rev-item ${cls}">
+                <div class="rev-num">${icon} Domanda ${r.qIndex + 1}</div>
+                <div class="rev-text">${esc(q.text)}</div>
+                <div class="rev-ans">
+                    ${userLine}
+                    <div class="rev-correct">Risposta corretta: ${esc(correctLabels)}</div>
+                </div>
+            </div>
+        `;
+    });
+
+    rv.innerHTML = html;
+    rv.scrollTop = 0;
+}
+
+function backToFinal() {
+    document.getElementById('reviewScreen').style.display = 'none';
+    document.getElementById('finalScreen').style.display = 'block';
+}
+</script>
+</body>
+</html>
